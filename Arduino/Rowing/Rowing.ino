@@ -19,14 +19,13 @@ int gBlau = 2;
 
 //## WiFi
 const char* ssid = "Netzwerk 1";
-const char* passwort = "";
+const char* passwort = "45481muelheim0208483590";
 const String newLine = "\n";
 MDNSResponder mdns;
 ESP8266WebServer server(80);
 //## ENDE WiFi
 
 void setup() {
-  //Serial.begin(115200);
   pinMode(PIN_ROT, OUTPUT);
   pinMode(PIN_GRUEN, OUTPUT);
   pinMode(PIN_BLAU, OUTPUT);
@@ -39,21 +38,13 @@ void setup() {
     //Serial.print("..");
     delay(500);
   }
-  //Serial.println("Verbunden");
-  //Serial.print("IP: ");
-  //Serial.println(WiFi.localIP());
 
-  if (mdns.begin("esp8266", WiFi.localIP())) {
-    //Serial.println("MDNS responder gestartet");
-  } else  {
-    //Serial.println("MDNS fehlgeschalgen");
-  }
+  mdns.begin("esp8266", WiFi.localIP());
 
   server.on("/", handleRootSeite);
   server.on("/weissabgleich", handleWeissabgleich);
 
   server.begin();
-  //Serial.println("Server gestartet");
 }
 
 void loop() {
@@ -198,9 +189,6 @@ void handleRootSeite() {
   html += F("</html>");
   html += newLine;
 
-
-
-
   server.send(200, "text/html", html);
 }
 
@@ -312,29 +300,13 @@ void handleNotFound() {
 }
 
 void setColor(int rot, int gruen, int blau) {
-  //Serial.print("RAW Werte: ");
-  //Serial.print(rot);
-  //Serial.print(" ");
-  //Serial.print(gruen);
-  //Serial.print(" ");
-  //Serial.print(blau);
-  //Serial.println(" ");
 
   //RGB FIX
-  //r:g:b
-  //3:6:1
   rot = rot * gRot;
   gruen = gruen * gGruen;
   blau = blau  * gBlau;
-  //RGB korrigieren Ende
+  //RGB FIX Ende
 
-  //Serial.print("KORR Werte: ");
-  //Serial.print(rot);
-  //Serial.print(" ");
-  //Serial.print(gruen);
-  //Serial.print(" ");
-  //Serial.print(blau);
-  //Serial.println(" ");
   analogWrite(PIN_ROT, rot);
   analogWrite(PIN_GRUEN, gruen);
   analogWrite(PIN_BLAU, blau);
@@ -348,6 +320,3 @@ byte countDigits(int num) {
   }
   return count;
 }
-
-
-
