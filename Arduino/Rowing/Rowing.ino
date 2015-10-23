@@ -17,6 +17,17 @@ int gGruen = 6;
 int gBlau = 2;
 //## ENDE RGB Kalibrierung
 
+//## Aktuelle LED Farben
+//Ohne Weißabgleich (eingegebene Werte vom User)
+int curRot;
+int curGruen;
+int curBlau;
+//Mit Weißabgleich (errechnte Werte)
+int curRotMitFix;
+int curGruenMitFix;
+int curBlauMitFix;
+//## Ende Aktuelle LED Farben
+
 //## WiFi
 const char* ssid = "Netzwerk 1";
 const char* passwort = "45481muelheim0208483590";
@@ -35,10 +46,15 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, passwort);
   while (WiFi.status() != WL_CONNECTED) {
-    //Serial.print("..");
     delay(500);
   }
-
+  setColor(255, 0, 0);
+  delay(1000);
+  setColor(0, 255, 0);
+  delay(1000);
+  setColor(0, 0, 255);
+  delay(1000);
+  setColor(0, 0, 0);
   mdns.begin("esp8266", WiFi.localIP());
 
   server.on("/", handleRootSeite);
@@ -61,22 +77,29 @@ void handleRootSeite() {
     float blau = server.arg("blau").toInt();
     setColor(rot, gruen, blau);
   }
-  else if (serverArgs == 1) {
+  else if (serverArgs == 2) {
     //Definierter RGB Wert
     int farbeCode = server.arg("sColor").toInt();
     byte helligkeit = server.arg("sHelligkeit").toInt();
-    if (farbeCode > 255255255 || farbeCode < 0 || countDigits(farbeCode) != 9) {
-      server.send(501, "text/plain", "Parameter sColor ist falsch. Muss 9 stellig und zwischen 0 und 255255255 sein!");
+    if (countDigits(farbeCode) != 9) {
+      server.send(501, "text/plain", "Parameter sColor ist falsch. Muss 9-stellig sein!");
       return;
     }
-    byte rot = farbeCode / 1000000;
-    byte gruen = (farbeCode % 1000000) / 1000;
-    byte blau = farbeCode % 1000;
+    int rot = farbeCode / 1000000;
+    int gruen = (farbeCode % 1000000) / 1000;
+    int blau = farbeCode % 1000;
+    bool converterErfolgreich = true;
+    rot = ErmittleEchteRgbWerte(rot, converterErfolgreich);
+    gruen = ErmittleEchteRgbWerte(gruen, converterErfolgreich);
+    blau = ErmittleEchteRgbWerte(blau, converterErfolgreich);
+    if (!converterErfolgreich) {
+      server.send(501, "text/plain", "ErmittleEchteRgbWerte ist fehlgeschlagen");
+    }
     //Heligkeit ist Prozentual von 0 bis 100
     rot = helligkeit / 100.0 * rot;
     gruen = helligkeit / 100.0 * gruen;
     blau = helligkeit / 100.0 * blau;
-    setColor((int) rot, (int) gruen, (int) blau);
+    setColor(rot, gruen, blau);
   }
 
   //Index.html:
@@ -116,17 +139,17 @@ void handleRootSeite() {
   html += newLine;
   html += F("<select name=\"sColor\">");
   html += newLine;
-  html += F("<option name=\"sAus\" value=\"000000000\">LEDs ausschalten</option>");
+  html += F("<option name=\"sAus\" value=\"300300300\">LEDs ausschalten</option>");
   html += newLine;
-  html += F("<option name=\"sRot\" value=\"255000000\">Rot</option>");
+  html += F("<option name=\"sRot\" value=\"255300300\">Rot</option>");
   html += newLine;
-  html += F("<option name=\"sGruen\" value=\"000255000\">Grün</option>");
+  html += F("<option name=\"sGruen\" value=\"300255300\">Grün</option>");
   html += newLine;
-  html += F("<option name=\"sBlau\" value=\"000000255\">Blau</option>");
+  html += F("<option name=\"sBlau\" value=\"300300255\">Blau</option>");
   html += newLine;
   html += F("<option name=\"sWeiss\" value=\"255255255\">Weiß</option>");
   html += newLine;
-  html += F("<option name=\"sOrange\" value=\"19350204\">Orange</option>");
+  html += F("<option name=\"sOrange\" value=\"193350204\">Orange</option>");
   html += newLine;
   html += F("</select>");
   html += newLine;
@@ -152,7 +175,7 @@ void handleRootSeite() {
   html += newLine;
   html += F("<form class=\"pure-form\">");
   html += newLine;
-  html += F("<input type=\"number\" name=\"rot\" autofocus autocomplete=\"off\" placeholder=\"Rot\" min=\"0\" max=\"255\" required>");
+  html += F("<input type=\"number\" name=\"rot\" autocomplete=\"off\" placeholder=\"Rot\" min=\"0\" max=\"255\" required>");
   html += newLine;
   html += F("<input type=\"number\" name=\"gruen\" autocomplete=\"off\" placeholder=\"Grün\" min=\"0\" max=\"255\" required>");
   html += newLine;
@@ -179,6 +202,76 @@ void handleRootSeite() {
   html += F("<i class=\"ion-android-options\"></i> Weißabgleich");
   html += newLine;
   html += F("</a>");
+  html += newLine;
+  html += F("</div>");
+  html += newLine;
+  html += F("<div class=\"pure-u-1 pure-u-md-1-1\">");
+  html += newLine;
+  html += F("<h2>Status</h2>");
+  html += newLine;
+  html += F("<table class=\"pure-table pure-table-horizontal\">");
+  html += newLine;
+  html += F("<thead>");
+  html += newLine;
+  html += F("<tr>");
+  html += newLine;
+  html += F("<th>Farbe</th>");
+  html += newLine;
+  html += F("<th>RGB</th>");
+  html += newLine;
+  html += F("<th>RGB WA</th>");
+  html += newLine;
+  html += F("<th>Helligkeit</th>");
+  html += newLine;
+  html += F("</tr>");
+  html += newLine;
+  html += F("</thead>");
+  html += newLine;
+  html += F("<tbody>");
+  html += newLine;
+  html += F("<tr>");
+  html += newLine;
+  html += F("<td>Rot</td>");
+  html += newLine;
+  html += "<td>" + String(curRot) + "</td>";
+  html += newLine;
+  html += "<td>" + String(curRotMitFix) + "</td>";
+  html += newLine;
+  html += "<td>" + String(ErrechneHelligkeit(curRotMitFix)) + "%</td>";
+  html += newLine;
+  html += F("</tr>");
+  html += newLine;
+  html += F("<tr>");
+  html += newLine;
+  html += F("<td>Gürn</td>");
+  html += newLine;
+  html += "<td>" + String(curGruen) + "</td>";
+  html += newLine;
+  html += "<td>" + String(curGruenMitFix) + "</td>";
+  html += newLine;
+  html += "<td>" + String(ErrechneHelligkeit(curGruenMitFix)) + "%</td>";
+  html += newLine;
+  html += F("</tr>");
+  html += newLine;
+  html += F("<tr>");
+  html += newLine;
+  html += F("<td>Blau</td>");
+  html += newLine;
+  html += "<td>" + String(curBlau) + "</td>";
+  html += newLine;
+  html += "<td>" + String(curBlauMitFix) + "</td>";
+  html += newLine;
+  html += "<td>" + String(ErrechneHelligkeit(curBlauMitFix)) + "%</td>";
+  html += newLine;
+  html += F("</tr>");
+  html += newLine;
+  html += F("</tbody>");
+  html += newLine;
+  html += F("</table>");
+  html += newLine;
+  html += F("<p>RGB WA ist der errechnete RGB-Wert mit den Einstellungen des Weißabgleichs. Durch die Einstellung des Weißabgleiches wird möglicherweise nicht für jede Farbe 100% Helligkeit erreicht.</p>");
+  html += newLine;
+  html += "<p>Der maximale RGB-Wert mit Weißabgleich ist " + String(range) + "</p>";
   html += newLine;
   html += F("</div>");
   html += newLine;
@@ -300,16 +393,43 @@ void handleNotFound() {
 }
 
 void setColor(int rot, int gruen, int blau) {
+  CheckFarbe(rot);
+  CheckFarbe(gruen);
+  CheckFarbe(blau);
+  curRot = rot;
+  curGruen = gruen;
+  curBlau = blau;
 
-  //RGB FIX
+   //Werte mit Weißabgleich errechnen
+  byte altergRot = gRot;
+  byte altergGruen = gGruen;
+  byte altergBlau = gBlau;
+    //Wenn nur eine Farbe aktiv ist, kann der Weißabgleich ignoriert werden. So wird die max Helligkeit erreicht: 
+  if(rot == 0 && gruen == 0) {    
+    gBlau = 9;
+  } else if(rot == 0 && blau == 0) {
+    gGruen = 9;
+  } else if(blau == 0 && gruen == 0) {
+    gRot = 9;
+  }
   rot = rot * gRot;
   gruen = gruen * gGruen;
   blau = blau  * gBlau;
-  //RGB FIX Ende
-
+    //Weißabgleichfaktoren auf alte Werte zurück
+  gRot = altergRot;
+  gGruen = altergGruen;
+  gBlau = altergBlau;
+  //ENDE Werte mit Weißabgleich errechnen
+  curRotMitFix = rot;
+  curGruenMitFix = gruen;
+  curBlauMitFix = blau;
   analogWrite(PIN_ROT, rot);
   analogWrite(PIN_GRUEN, gruen);
   analogWrite(PIN_BLAU, blau);
+}
+int CheckFarbe(int farbe) {
+  if (farbe > 255) return 255;
+  if (farbe < 0) return 0;
 }
 
 byte countDigits(int num) {
@@ -320,3 +440,23 @@ byte countDigits(int num) {
   }
   return count;
 }
+
+int ErmittleEchteRgbWerte(int farbenCode, bool converterErfolgreich) {
+  if (farbenCode >= 100 && farbenCode <= 255) {
+    //Ist schon der echte RGB-Wert
+    return farbenCode;
+  } else if (farbenCode == 300) {
+    //Entspricht 0
+    return 0;
+  } else if (farbenCode > 300 && farbenCode <= 399) {
+    //Echter RGB ist zwischen 1 und 99.
+    return farbenCode - 300;
+  }
+  converterErfolgreich = false;
+  return 0; //Fehler!
+}
+
+int ErrechneHelligkeit(int farbe) {
+  return (int) ((farbe / (float) range) * 100);
+}
+
