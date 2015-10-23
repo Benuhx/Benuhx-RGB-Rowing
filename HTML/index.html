@@ -22,7 +22,7 @@
                     <option name="sGruen" value="300255300">Grün</option>
                     <option name="sBlau" value="300300255">Blau</option>
                     <option name="sWeiss" value="255255255">Weiß</option>
-                    <option name="sOrange" value="193350204">Orange</option>
+                    <option name="sOrange" value="255165300">Orange</option>
                 </select>
                 <br>
                 <input type="number" min="0" max="100" name="sHelligkeit" id="1" autocomplete="off"
@@ -47,9 +47,12 @@
     <!--Einstellungen-->
     <div class="pure-u-1 pure-u-md-1-1">
         <h2>Einstellungen</h2>
-        <a href="/weissabgleich" class="pure-button">
+        <p><a href="/weissabgleich" class="pure-button">
             <i class="ion-android-options"></i> Weißabgleich
         </a>
+        <a href="/wlan" class="pure-button">
+            <i class="ion-wifi"></i> WLAN
+        </a></p>
     </div>
     <div class="pure-u-1 pure-u-md-1-1">
         <h2>Status</h2>
@@ -85,6 +88,7 @@
         </table>
         <p>RGB WA ist der errechnete RGB-Wert mit den Einstellungen des Weißabgleichs. Durch die Einstellung des Weißabgleiches wird möglicherweise nicht für jede Farbe 100% Helligkeit erreicht.</p>
         <p>Der maximale RGB-Wert mit Weißabgleich ist #!String(range)!#</p>
+        <p>#!String(ESP.getFreeHeap())!# freier Heap</p>
     </div>
 </div>
 
