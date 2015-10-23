@@ -3,7 +3,6 @@
 #include <ESP8266mDNS.h>
 #include <ESP8266WebServer.h>
 
-
 const int range = 2295;
 //## PINS
 const byte PIN_ROT = D2;
@@ -51,9 +50,7 @@ void setup() {
   analogWriteFreq(2000);
   setColor(0, 0, 0);
 
-
-  Serial.begin(115200);
-  Serial.println();
+  //WLAN Zugangsdaten aus EEPROM lesen
   byte ssidLaenge = LeseByteAusEeprom(ssidLaengeAdresse);
   byte passwordLaenge = LeseByteAusEeprom(passwordLaengeAdresse);
   byte passwortStartAdresse = ssidStartAdresse + ssidLaenge + 1;
@@ -63,33 +60,29 @@ void setup() {
 
   char passwort[passwordLaenge + 1];
   LeseStringAusEeprom(passwortStartAdresse, passwordLaenge, passwort);
-  Serial.print("SSID: #");
-  Serial.print(ssid);
-  Serial.println("#");
-  Serial.print("Passwort: #");
-  Serial.print(passwort);
-  Serial.println("#");
+  //ENDE WLAN Zugangsdaten aus EEPROM lesen
 
   WiFi.mode(WIFI_STA);
-
   WiFi.begin(ssid, passwort);
   unsigned long timeout = millis()  + (connectionTimeoutInSekunden * 1000);
   bool wifiConfigMode = false;
   while (WiFi.status() != WL_CONNECTED) {
     delay(100);
     if (millis() > timeout) {
-      Serial.println("Wifi nicht erfolgreich");
+      //Wir konnten uns nicht mit dem angegebenen WLAN verbinden.
       wifiConfigMode = true;
       break;
     }
   }
   if (wifiConfigMode) {
+    //Eigenes WLAN aufspannen
     WiFi.mode(WIFI_AP);
     IPAddress ip(192, 168, 0, 1);
     IPAddress mask(255, 255, 255, 0);
     WiFi.softAPConfig(ip, ip, mask);
     WiFi.softAP("ROWING RGB", "setupRgbRowing2015");
   }
+  //Alle Farben einmal an und aus machen
   setColor(255, 0, 0);
   delay(1000);
   setColor(0, 255, 0);
@@ -196,7 +189,7 @@ void handleRootSeite() {
   html += newLine;
   html += F("<option name=\"sWeiss\" value=\"255255255\">Weiß</option>");
   html += newLine;
-  html += F("<option name=\"sOrange\" value=\"193350204\">Orange</option>");
+  html += F("<option name=\"sOrange\" value=\"255165300\">Orange</option>");
   html += newLine;
   html += F("</select>");
   html += newLine;
@@ -326,6 +319,8 @@ void handleRootSeite() {
   html += newLine;
   html += "<p>Der maximale RGB-Wert mit Weißabgleich ist " + String(range) + "</p>";
   html += newLine;
+  html += "<p>" + String(ESP.getFreeHeap()) + " freier Heap</p>";
+  html += newLine;
   html += F("</div>");
   html += newLine;
   html += F("</div>");
@@ -334,7 +329,6 @@ void handleRootSeite() {
   html += newLine;
   html += F("</html>");
   html += newLine;
-
 
   server.send(200, "text/html", html);
 }
@@ -424,76 +418,6 @@ void handleWeissabgleich() {
   html += newLine;
   html += F("</html>");
   html += newLine;
-  html += F("<!DOCTYPE html>");
-  html += newLine;
-  html += F("<html lang=\"de\">");
-  html += newLine;
-  html += F("<head>");
-  html += newLine;
-  html += F("<!-- -->");
-  html += newLine;
-  html += F("<meta charset=\"UTF-8\">");
-  html += newLine;
-  html += F("<title>Weißabgleich</title>");
-  html += newLine;
-  html += F("<link rel=\"stylesheet\" href=\"http://yui.yahooapis.com/pure/0.6.0/pure-min.css\">");
-  html += newLine;
-  html += F("<link rel=\"stylesheet\" href=\"http://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css\">");
-  html += newLine;
-  html += F("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
-  html += newLine;
-  html += F("</head>");
-  html += newLine;
-  html += F("<body>");
-  html += newLine;
-  html += F("<div class=\"pure-g\">");
-  html += newLine;
-  html += F("<div class=\"pure-u-1 pure-u-md-1-1\">");
-  html += newLine;
-  html += F("<h1>Weißabgleich</h1>");
-  html += newLine;
-  html += F("<p>Rot, Grün und Blau der LEDs leuchten auf der max. Helligkeit. Schieben Sie die Regler so, dass ein natürlich wirkendes Weiß ensteht.</p>");
-  html += newLine;
-  html += F("<p>Setzen Sie min. 1 Regler auf 9, sonst wird niemals die max Helligkeit erzielt. Je höher die eingstellten Werte, desto heller scheinen die LEDs.</p>");
-  html += newLine;
-  html += F("<p>Default ist 9:6:2</p>");
-  html += newLine;
-  html += F("<fieldset>");
-  html += newLine;
-  html += F("<legend>Wertebereich jeweils von 1 bis 9</legend>");
-  html += newLine;
-  html += F("<form class=\"pure-form\">");
-  html += newLine;
-  html += "Rot <input type=\"number\" min=\"1\" max=\"9\" value=\"" + String(gRot) + "\" name=\"wrot\">";
-  html += newLine;
-  html += "Grün <input type=\"number\" min=\"1\" max=\"9\" value=\"" + String(gGruen) + "\" name=\"wgruen\">";
-  html += newLine;
-  html += "Blau <input type=\"number\" min=\"1\" max=\"9\" value=\"" + String(gBlau) + "\" name=\"wblau\">";
-  html += newLine;
-  html += F("<br>");
-  html += newLine;
-  html += F("<button type=\"submit\" class=\"pure-button ion-checkmark\"> Speichern / Testen</button>");
-  html += newLine;
-  html += F("<br>");
-  html += newLine;
-  html += F("<br>");
-  html += newLine;
-  html += F("<a href=\"/\" class=\"pure-button ion-close\"> Verwerfen</a>");
-  html += newLine;
-  html += F("</form>");
-  html += newLine;
-  html += F("</fieldset>");
-  html += newLine;
-  html += F("<br>");
-  html += newLine;
-  html += F("</div>");
-  html += newLine;
-  html += F("</div>");
-  html += newLine;
-  html += F("</body>");
-  html += newLine;
-  html += F("</html>");
-  html += newLine;
 
   setColor(255, 255, 255);
   server.send(200, "text/html", html);
@@ -505,7 +429,6 @@ void handleWlanKonfiguration() {
     String passwort = server.arg("passwort");
     ssid.replace("+", " ");
     passwort.replace("+", " ");
-    Serial.println(ssid);
     if (ssid.length() < 1 || passwort.length() < 1) {
       server.send(501, "text/plain", "SSID oder Passwort Laenge war 0!");
       return;
@@ -562,7 +485,7 @@ void handleWlanKonfiguration() {
     html += newLine;
     html += F("<p><b>Entfernen Sie für circa 5 Sekunden den Stromstecker und verbinden Sie ihn danach wieder, damit der Microcontroller neu startet!</b></p>");
     html += newLine;
-    html += F("<p>Er wird sich danach mit den angegebenen WLAN verbinden:</p>");
+    html += F("<p>Er wird sich danach mit dem angegebenen WLAN verbinden:</p>");
     html += newLine;
     html += "<p>SSID: '" + String(ssidR) + "'</p>";
     html += newLine;
@@ -579,9 +502,8 @@ void handleWlanKonfiguration() {
     html += F("</html>");
     html += newLine;
 
-
     server.send(200, "text/html", html);
-    delay(5000); //HTTP Request bearbeiten
+    delay(5000); //server.send bearbeiten
     while (true) {
       delayMicroseconds(1000); //Keine HTTP Anfragen mehr bearbeiten. IC soll ja neu gestartet werden
     }
@@ -643,6 +565,7 @@ void handleWlanKonfiguration() {
   html += newLine;
   html += F("</html>");
   html += newLine;
+
 
   server.send(200, "text/html", html);
 }
@@ -758,17 +681,9 @@ bool SpeichereStringInEeprom(String value, int startAdresse) {
 void LeseStringAusEeprom(int startAdresse, int laenge, char *outResultChar) { //outResultChar Länge = laenge + 1 !!!!
   EEPROM.begin(eepromUsedBytes);
   outResultChar[laenge] = '\0'; //Nullterminierung: Wenn laenge 4 ist, geht Array Index von 0-4 (laenge + 1). Dabei ist Index 0-3 EEPROM, Index 4 null-Terminierung
-  Serial.print("Vor lesen : ");
-  Serial.println(outResultChar);
   for (int i = 0; i < laenge; i++) {
     outResultChar[i] = EEPROM.read(startAdresse + i);
-    Serial.print("Pos: ");
-    Serial.print(i);
-    Serial.print(" Char: ");
-    Serial.println(outResultChar[i]);
   }
-  Serial.print("Nach lesen: ");
-  Serial.println(outResultChar);
 }
 
 bool SpechereByteInEeprom(byte wert, int adresse) {
