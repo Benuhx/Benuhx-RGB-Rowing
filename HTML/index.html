@@ -47,10 +47,44 @@
     <!--Einstellungen-->
     <div class="pure-u-1 pure-u-md-1-1">
         <h2>Einstellungen</h2>
-        <p>Aktuell: LEDs leuchten mit R#!String(curRot)!# G#!String(curGruen)!# B#!String(curBlau)!#</p>
         <a href="/weissabgleich" class="pure-button">
             <i class="ion-android-options"></i> Weißabgleich
         </a>
+    </div>
+    <div class="pure-u-1 pure-u-md-1-1">
+        <h2>Status</h2>
+        <table class="pure-table pure-table-horizontal">
+            <thead>
+            <tr>
+                <th>Farbe</th>
+                <th>RGB</th>
+                <th>RGB WA</th>
+                <th>Helligkeit</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Rot</td>
+                <td>#!String(curRot)!#</td>
+                <td>#!String(curRotMitFix)!#</td>
+                <td>#!String(ErrechneHelligkeit(curRotMitFix))!#%</td>
+            </tr>
+            <tr>
+                <td>Gürn</td>
+                <td>#!String(curGruen)!#</td>
+                <td>#!String(curGruenMitFix)!#</td>
+                <td>#!String(ErrechneHelligkeit(curGruenMitFix))!#%</td>
+            </tr>
+            <tr>
+                <td>Blau</td>
+                <td>#!String(curBlau)!#</td>
+                <td>#!String(curBlauMitFix)!#</td>
+                <td>#!String(ErrechneHelligkeit(curBlauMitFix))!#%</td>
+            </tr>
+            </tbody>
+        </table>
+        <p>RGB WA ist der errechnete RGB-Wert mit den Einstellungen des Weißabgleichs. Durch die Einstellung des Weißabgleiches wird möglicherweise nicht für jede Farbe 100% Helligkeit erreicht.</p>
+        <p>Der maximale RGB-Wert mit Weißabgleich ist #!String(range)!#</p>
     </div>
 </div>
 
