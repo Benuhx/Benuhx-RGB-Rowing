@@ -30,7 +30,7 @@ int curBlauMitFix;
 
 //## WiFi
 const char* ssid = "Netzwerk 1";
-const char* passwort = "45481muelheim0208483590";
+const char* passwort = "";
 const String newLine = "\n";
 MDNSResponder mdns;
 ESP8266WebServer server(80);
