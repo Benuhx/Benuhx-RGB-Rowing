@@ -1,4 +1,5 @@
-﻿using System;
+﻿using NUglify;
+using System;
 using System.Windows.Forms;
 
 namespace ArduinoHtmlHelper
@@ -12,6 +13,13 @@ namespace ArduinoHtmlHelper
 
         private void btnStart_Click(object sender, EventArgs e)
         {
+            var minifiziert = Uglify.Html(rtbHtml.Text);
+            if(minifiziert.HasErrors)
+            {
+                MessageBox.Show("Fehler: " + string.Join(Environment.NewLine, minifiziert.Errors));
+                return;
+            }
+            rtbHtml.Text = minifiziert.Code;
             for (var i = 0; i < rtbHtml.Text.Split('\n').Length; i++)
             {
                 var curLine = rtbHtml.Text.Split('\n')[i];
@@ -41,12 +49,12 @@ namespace ArduinoHtmlHelper
                 {
                     rtbResult.Text =
                         string.Format(useFFunction ? @"String html = F(""{0}"");" : @"String html = ""{0}"";", bLine);
-                    rtbResult.Text += Environment.NewLine + "html += newLine;" + Environment.NewLine;
+                    rtbResult.Text += Environment.NewLine;
                 }
                 else
                 {
                     rtbResult.Text += string.Format(useFFunction ? @"html += F(""{0}"");" : @"html += ""{0}"";", bLine);
-                    rtbResult.Text += Environment.NewLine + "html += newLine;" + Environment.NewLine;
+                    rtbResult.Text += Environment.NewLine;
                 }
             }
             Clipboard.SetText(rtbResult.Text);
