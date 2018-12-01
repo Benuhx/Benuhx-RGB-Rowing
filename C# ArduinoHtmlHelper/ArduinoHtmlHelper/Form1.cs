@@ -12,6 +12,8 @@ namespace ArduinoHtmlHelper
 
         private void btnStart_Click(object sender, EventArgs e)
         {
+            var h = new ZetaProducerHtmlCompressor.HtmlContentCompressor();            
+            rtbHtml.Text = h.Compress(rtbHtml.Text);
             for (var i = 0; i < rtbHtml.Text.Split('\n').Length; i++)
             {
                 var curLine = rtbHtml.Text.Split('\n')[i];
@@ -24,11 +26,10 @@ namespace ArduinoHtmlHelper
                     var start = bLine.IndexOf("#!", StringComparison.Ordinal);
                     var ende = bLine.IndexOf("!#", StringComparison.Ordinal);
                     if (start > 0 && ende > 0)
-                    {
-                        useFFunction = false;
+                    {                        
                         var txt = bLine.Substring(start + 2, ende - start - 2);
                         bLine = bLine.Remove(start, ende - start + 2);
-                        bLine = bLine.Insert(start, string.Format(@""" + {0} + """, txt));
+                        bLine = bLine.Insert(start, $@""");{Environment.NewLine}html += {txt};{Environment.NewLine}html += F(""");
                     }
                     else
                     {
@@ -46,8 +47,10 @@ namespace ArduinoHtmlHelper
                 else
                 {
                     rtbResult.Text += string.Format(useFFunction ? @"html += F(""{0}"");" : @"html += ""{0}"";", bLine);
-                    rtbResult.Text += Environment.NewLine + "html += newLine;" + Environment.NewLine;
+                    rtbResult.Text += Environment.NewLine;// + "html += newLine;" + Environment.NewLine;
                 }
+                
+                rtbResult.Text = h.Compress(rtbResult.Text).Replace("html += newLine;", "");
             }
             Clipboard.SetText(rtbResult.Text);
         }
